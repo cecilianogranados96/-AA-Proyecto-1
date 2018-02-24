@@ -1,14 +1,12 @@
-
-#include<stdio.h>
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
 #include <stdbool.h>
-#include<string.h>
 #include <stdlib.h>
 #include <time.h>
 
-int mat[9][9];
 
-
-
+int mat[9][9],celdas_base[9][9],prob_len,revisar_fila=1,revisar_columna=1,revisar_seccion=1,terminar=1,repeat,i,j,k,l;
 
 void imprimir_matriz(int mat[9][9])
 {
@@ -23,141 +21,24 @@ void imprimir_matriz(int mat[9][9])
     }
 }
 
-bool siguiente_casilla_vacia(int mat[9][9], int *row, int *col)
-{
-    int i;
-    int j;
-    
-    for (i = 0; i < 9; i++) {
-        for (j = 0; j < 9; j++) {
-            if(mat[i][j] == 0) {
-                *row = i;
-                *col = j;
-                return true;
-            }
+
+void guardar(char archivo[1024],int mat[9][9]){
+    FILE *fp;
+ 	char cadena[1024] = "";
+ 	fp = fopen ( archivo, "w+" );
+    char buffer[1024];
+    for(i=0;i<9;i++)
+    {
+        for(j=0;j<9;j++)
+        {
+         sprintf(buffer, "%d,", mat[i][j]);
+         strcat(cadena, buffer);
         }
-    }
-    return false;
+        strcat(cadena, "\n");
+	}
+    fwrite(cadena, sizeof(char), sizeof(cadena), fp);
+    fclose ( fp ); 
 }
-
-bool verificar_fila(int mat[9][9], int row, int num)
-{
-    int i;
-    int j;
-    
-    for(i = 0; i < 9; i++) {
-        if(mat[row][i] != 0) {
-            if(mat[row][i] == 0) {
-                continue;
-            }
-            if(mat[row][i] == num) {
-                //printf("Conflict along row: %d\n", row);
-                return false;
-            } 
-        }
-    }
-    return true;
-}
-
-bool verificar_columna(int mat[9][9], int col, int num)
-{
-    int i;
-    int j;
-    int found[9];
-    memset(found, 0, sizeof(found));
-    
-    for(i = 0; i < 9; i++) {
-        if(mat[i][col] != 0) {
-            if(mat[i][col] == 0) {
-                continue;
-            }
-            if(mat[i][col] == num) {
-                //printf("Conflict along col: %d\n", col);
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
-bool verificar_bloque(int mat[9][9], int row, int col, int num)
-{
-    int i;
-    int j;
-    int box_row_index;
-    int box_col_index;
-    int icount = 0;
-    int jcount = 0;
-    
-    box_row_index = (row / 3) * 3;
-    box_col_index = (col / 3) * 3;
-    
-    for(i = box_row_index, icount = 0; icount < 3; i++, icount++) {
-        for(j = box_col_index, jcount = 0; jcount < 3; j++, jcount++) {
-            if(mat[i][j] == 0) {
-                continue;
-            }
-            if(mat[i][j] == num) {
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
-bool verificar_conflictos(int mat[9][9], int row, int col, int num)
-{
-    return (verificar_fila(mat, row, num) &&
-            verificar_columna(mat, col, num) &&
-            verificar_bloque(mat, row, col, num));
-}
-
-bool verificar_soduku(int mat[9][9])
-{
-    int i;
-    int j;
-    static bool rows[9][9];
-    static bool cols[9][9];
-    static bool blocks[9][9];
-    for (i = 0; i < 9; i++) {
-        for (j = 0; j < 9; j++) {
-            if (mat[i][j] == 0) {
-                continue;
-            }
-            int pos = mat[i][j] - 1;
-            if (rows[i][pos] || cols[j][pos] || blocks[i - i % 3 + j / 3][pos]) {
-                return false;
-            }
-            rows[i][pos] = cols[j][pos] = blocks[i - i % 3 + j / 3][pos] = true;
-        }
-    }
-    return true;
-}
-
-bool resolver(int mat[9][9])
-{
-    int row;
-    int col;
-    int num;
-    if(!siguiente_casilla_vacia(mat, &row, &col)) {
-        imprimir_matriz(mat);
-        return true;
-    }
-    for(num = 1; num <= 9; num++) {
-        if(verificar_conflictos(mat, row, col, num)) {
-            mat[row][col] = num;
-            if(resolver(mat)) {
-                return true;
-            }
-            mat[row][col] = 0;
-        } else {
-            printf("Celda[%d][%d] = %d CONFLICTO\n", row, col, num);
-        }
-    }
-    return false;
-}
-
-
 
 void leer(char archivo[1024]){
     char linea[1024];
@@ -171,7 +52,6 @@ void leer(char archivo[1024]){
         pch = strtok (linea," ,");
         while (pch != NULL)
         {
-            //printf ("[%d,%d] %s \t",i,j,pch); 
             mat[i][j] =  atoi(pch); 
             pch = strtok (NULL, " ,"); 
             j++;
@@ -182,44 +62,124 @@ void leer(char archivo[1024]){
     fclose(fich);  
 }
 
-
-
-void guardar(char archivo[1024]){
-    FILE *fp;
- 	char cadena[1024] = "";
- 	fp = fopen ( archivo, "w+" );
-    char buffer[1024];
-    for (int i = 0; i <= 8; i++) {
-		for (int j = 0; j <= 8; j++){
-             sprintf(buffer, "%d,", mat[j][i]);
-			 strcat(cadena, buffer);
+void resolver(int mat[9][9]){
+    for(i=0;i<9;i++)
+    {
+        for(j=0;j<9;j++)
+        {
+            if(mat[i][j]==0){
+                celdas_base[i][j]=0;
+            }
+            else{
+                celdas_base[i][j]=1;
+            }
         }
-        strcat(cadena, "\n");
-	}
-    fwrite(cadena, sizeof(char), sizeof(cadena), fp);
-    fclose ( fp ); 
+    }
+    
+    /*SOLVE*/
+    for(i=0;i<9;i++)
+    {
+        for(j=0;j<9;j++)
+        {
+            if(celdas_base[i][j]==0)
+            {
+                do
+                {
+                    terminar=0;
+                    
+                    while((revisar_fila==1 || revisar_columna==1 || revisar_seccion==1) && mat[i][j]<=9)
+                    {
+                        revisar_fila=0; revisar_columna=0; revisar_seccion=0;
+                        mat[i][j]++;
+
+                        for(k=0;k<9;k++)
+                        {
+                            if(k!=j && mat[i][j]==mat[i][k])
+                            {
+                                revisar_fila=1;
+                                printf("Error en la fila  \t%d%d%d\t%d%d%d\n",i,j,mat[i][j],i,k,mat[i][k]);
+                                break;
+                            }
+                        }
+
+                        if(revisar_fila==0)
+                        {
+                            for(l=0;l<9;l++)
+                            {
+                                if(l!=i && mat[i][j]==mat[l][j])
+                                {
+                                    revisar_columna=1;
+                                    printf("Error en la columna\t%d%d%d\t%d%d%d\n",i,j,mat[i][j],l,j,mat[l][j]);
+                                    break;
+                                }
+                            }
+                        }
+
+                        if(revisar_fila==0 && revisar_columna==0)
+                        {
+                            for(k=0;k<9;k++)
+                            {for(l=0;l<9;l++)
+                                {
+                                    if(k!=j && l!=i && (10*(i/3)+j/3==10*(l/3)+k/3) && mat[i][j]==mat[l][k])
+                                    {
+                                        revisar_seccion=1;
+                                        printf("Error en la seccion  \t%d%d%d\t%d%d%d\n",i,j,mat[i][j],l,k,mat[l][k]);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    revisar_fila=1; revisar_columna=1; revisar_seccion=1;
+
+                    if(mat[i][j]>9)
+                    {
+                        mat[i][j]=0;
+                        do
+                        {
+                            j--;
+                            if(j<0)
+                            {
+                                j=8; i--;
+                            }
+                        }
+                        while(celdas_base[i][j]==1);
+                        terminar=1;
+                        printf("\n\nRegreso\t\n\n");
+                    }
+                }
+                while(terminar==1);
+            }
+        }
+    }
 }
 
 
-
-int main(int argc, char **argv)
+int main()
 {
     
+    leer ("test_4.txt");
     
-    leer ("test.txt");
-    
-    if(verificar_soduku(mat)) {
-        resolver(mat);
-    } else {
-        printf("INVALIDO\n");
-    }
+        
+    clock_t tInicio, tFin, tDecorrido;
+    tInicio = clock();
+    resolver(mat);
     
     
-      guardar("guardar.txt");
+    imprimir_matriz(mat);
+    
+    guardar("guardar.txt",mat);
     
     
+    tFin = clock();
     
+    tDecorrido = ((tFin - tInicio) / (CLOCKS_PER_SEC / 1000));
     
+    printf("\nTIEMPO: %lums \n",tDecorrido);
     
+
+
     
+    return 0;
 }
