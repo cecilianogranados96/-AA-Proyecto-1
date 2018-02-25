@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-
+//cambio
 int mat[9][9],celdas_base[9][9],prob_len,revisar_fila=1,revisar_columna=1,revisar_seccion=1,terminar=1,repeat,i,j,k,l;
 
 void imprimir_matriz(int mat[9][9])
