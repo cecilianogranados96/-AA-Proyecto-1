@@ -45,7 +45,7 @@ void leer(char archivo[1024]){
     FILE *fich;
     int i = 0;
     int j = 0; 
-    int num = 0;
+    //int num = 0;
     fich = fopen(archivo, "r");
     while(fgets(linea, 1024, (FILE*) fich)) {
         char * pch;
@@ -63,67 +63,58 @@ void leer(char archivo[1024]){
 }
 
 void resolver(int mat[9][9]){
-    for(i=0;i<9;i++)
-    {
-        for(j=0;j<9;j++)
-        {
-            if(mat[i][j]==0){
-                celdas_base[i][j]=0;
-            }
-            else{
-                celdas_base[i][j]=1;
-            }
+    
+    //Define cuales celdas estaban definidas desde el principio
+    for(i = 0; i < 9; i++){				//Revisa las filas
+        for(j = 0; j < 9; j++){			//Revisa las columnas
+            if(mat[i][j] == 0)			//Si es cero escribe que no había celdas base
+                celdas_base[i][j] = 0;	
+            else{						//Si tiene cualquier otra cosa escribe un uno si había algo
+				celdas_base[i][j] = 1;
+			}
         }
     }
     
-    /*SOLVE*/
-    for(i=0;i<9;i++)
-    {
-        for(j=0;j<9;j++)
-        {
-            if(celdas_base[i][j]==0)
-            {
-                do
-                {
-                    terminar=0;
+    
+    //Soluciona el sudoku
+    for(i = 0; i < 9; i++){					//Revisa las columnas
+        for(j = 0; j < 9; j++){				//Revisa las filas
+            if(celdas_base[i][j] == 0){ 	//Si la celda base sea 0, osea, que no tuviera un dato de inicio
+                do{							
+                    terminar = 0;			//Cambia momentaneamente la variable de terminado como completada
                     
-                    while((revisar_fila==1 || revisar_columna==1 || revisar_seccion==1) && mat[i][j]<=9)
-                    {
-                        revisar_fila=0; revisar_columna=0; revisar_seccion=0;
-                        mat[i][j]++;
-
-                        for(k=0;k<9;k++)
-                        {
-                            if(k!=j && mat[i][j]==mat[i][k])
-                            {
-                                revisar_fila=1;
-                                printf("Error en la fila  \t%d%d%d\t%d%d%d\n",i,j,mat[i][j],i,k,mat[i][k]);
+                    //Mientras no haya terminado de cumplir todos los requisitos
+                    while((revisar_fila == 1 || revisar_columna == 1 || revisar_seccion == 1) && mat[i][j] <= 9){
+                        revisar_fila = 0; revisar_columna = 0; revisar_seccion = 0;		//Temporalmente los pone en completados, mientras revisa.
+                        mat[i][j]++;		//Le incrementa en un valor al espacio i,j de la matriz y revisa con dicho espacio. Si empieza en cero queda en uno
+						
+						//Revisa todos los j de la fila, para ver si cumple los requisitos
+                        for(k = 0; k < 9; k++){
+                            if(k != j && mat[i][j] == mat[i][k]){	//Si uno no es igual no cumple los requisitos
+                                revisar_fila = 1;					//Pone el revisar_fila en incompleto
+                                printf("Error en la fila  \t%d%d%d\t%d%d%d\n", i, j, mat[i][j], i, k, mat[i][k]);	//Marca el error en la fila
                                 break;
                             }
                         }
 
-                        if(revisar_fila==0)
-                        {
-                            for(l=0;l<9;l++)
-                            {
-                                if(l!=i && mat[i][j]==mat[l][j])
-                                {
-                                    revisar_columna=1;
-                                    printf("Error en la columna\t%d%d%d\t%d%d%d\n",i,j,mat[i][j],l,j,mat[l][j]);
+						//Si no hubo errores en la columna. Revisa todos los i de las columnas, para ver si cumple los requisitos
+                        if(revisar_fila == 0){
+                            for(l = 0; l < 9; l++){
+                                if(l != i && mat[i][j] == mat[l][j]){	//Si uno no es igual no cumple los requisitos
+                                    revisar_columna = 1;				//Pone el revisar_columna en incompleto
+                                    printf("Error en la columna\t%d%d%d\t%d%d%d\n", i, j, mat[i][j], l, j, mat[l][j]);	//Marca el error en la columna
                                     break;
                                 }
                             }
                         }
-
-                        if(revisar_fila==0 && revisar_columna==0)
-                        {
-                            for(k=0;k<9;k++)
-                            {for(l=0;l<9;l++)
-                                {
-                                    if(k!=j && l!=i && (10*(i/3)+j/3==10*(l/3)+k/3) && mat[i][j]==mat[l][k])
-                                    {
-                                        revisar_seccion=1;
-                                        printf("Error en la seccion  \t%d%d%d\t%d%d%d\n",i,j,mat[i][j],l,k,mat[l][k]);
+						
+						//Si no hubo errores en la fila o en la columna. Revisa en la seccion, para ver si cumple los requisitos
+                        if(revisar_fila == 0 && revisar_columna == 0){
+                            for(k = 0; k < 9; k++){
+								for(l = 0; l < 9; l++){
+                                    if(k != j && l != i && (10*(i/3)+j/3 == 10*(l/3)+k/3) && mat[i][j] == mat[l][k]){	//Si un número de la seccion es igual no cumple los requisitos
+                                        revisar_seccion = 1;																//Pone el revisar seccion como incompleto
+                                        printf("Error en la seccion  \t%d%d%d\t%d%d%d\n", i, j, mat[i][j], l, k, mat[l][k]);	//Marca el error en la seccion
                                         break;
                                     }
                                 }
@@ -131,25 +122,24 @@ void resolver(int mat[9][9]){
                         }
                     }
 
-                    revisar_fila=1; revisar_columna=1; revisar_seccion=1;
+                    revisar_fila = revisar_columna = revisar_seccion = 1;	//Vuelve a marcar como incompletas todas las revisiones para revisar el siguiente elemento
 
-                    if(mat[i][j]>9)
-                    {
-                        mat[i][j]=0;
-                        do
-                        {
+					//Si la matriz tiene un elemento mayor a 9 lo resetea a 0
+                    if(mat[i][j] > 9){
+                        mat[i][j] = 0;
+                        //Busca la siguiente celda vacía
+                        do{
                             j--;
-                            if(j<0)
-                            {
-                                j=8; i--;
-                            }
-                        }
-                        while(celdas_base[i][j]==1);
-                        terminar=1;
-                        printf("\n\nRegreso\t\n\n");
+                            if(j < 0){
+                                j = 8;
+                                i--;
+							}
+                        } while(celdas_base[i][j] == 1);
+                        //Marca como incompleto el terminar
+                        terminar = 1;
+                        printf("\n\nRegreso\t\n\n"); //Regresa
                     }
-                }
-                while(terminar==1);
+                } while(terminar == 1);		//Mientras no este terminado
             }
         }
     }
@@ -158,28 +148,17 @@ void resolver(int mat[9][9]){
 
 int main()
 {
-    
     leer ("test_4.txt");
-    
-        
+           
     clock_t tInicio, tFin, tDecorrido;
     tInicio = clock();
     resolver(mat);
-    
-    
+    tFin = clock();
     imprimir_matriz(mat);
     
-    guardar("guardar.txt",mat);
-    
-    
-    tFin = clock();
-    
     tDecorrido = ((tFin - tInicio) / (CLOCKS_PER_SEC / 1000));
-    
     printf("\nTIEMPO: %lums \n",tDecorrido);
-    
-
-
-    
+       
+    guardar("guardar.txt",mat);   
     return 0;
 }
