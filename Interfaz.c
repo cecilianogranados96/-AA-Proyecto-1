@@ -14,8 +14,6 @@ GtkWidget	*matBotones[9][9];
 GThread		*hiloTiempo;
 GThread		*hiloActualizar;
 
-static GMainLoop *gloop;
-static gboolean exit_thread;
 
 clock_t tInicio, tFin;
 int tDecorrido;
@@ -40,7 +38,7 @@ void on_winPrincipal_destroy()
 
 void actualizar_matriz()
 {
-	g_print("Llamo usted?");
+	//g_print("Llamo usted?");
 	for (int row = 0; row < 9; row++) {
         for (int col = 0; col < 9; col++) {
 			if(mat[row][col] != 0){
@@ -48,7 +46,12 @@ void actualizar_matriz()
 				int length = snprintf( NULL, 0, "%d", mat[row][col]);
 				char* str = malloc(length++);
 				snprintf(str, length + 1, "%d", mat[row][col]);
-				gtk_button_set_label(GTK_BUTTON(matBotones[row][col]), str);
+				
+                gtk_button_set_label(GTK_BUTTON(matBotones[row][col]), str);  
+                
+          
+                    
+                
 				free(str);
 				gtk_widget_queue_draw(matBotones[row][col]);
 				while (g_main_context_pending(NULL))
@@ -59,24 +62,33 @@ void actualizar_matriz()
 				gtk_widget_queue_draw(matBotones[row][col]);
 				while (g_main_context_pending(NULL))
 					g_main_context_iteration(NULL, FALSE);
-				}
+            }
         }
     }
 }
 
-void* actualizar(void *data)
+
+void actualizar_numero(int row, int col)
 {
-	g_print("3\n");
-	while(!exit_thread){
-		g_print("4\n");
-		g_usleep(1);
-		g_print("5\n");
-		actualizar_matriz();
-		g_print("6\n");
-	}
-	
-	return NULL;
+    if(mat[row][col] != 0){
+        //g_print("R:%d C:%d matriz:%d\t", row, col, mat[row][col]);
+        int length = snprintf( NULL, 0, "%d", mat[row][col]);
+        char* str = malloc(length++);
+        snprintf(str, length + 1, "%d", mat[row][col]);
+        gtk_button_set_label(GTK_BUTTON(matBotones[row][col]), str);
+        free(str);
+        gtk_widget_queue_draw(matBotones[row][col]);
+        while (g_main_context_pending(NULL))
+            g_main_context_iteration(NULL, FALSE);
+    }
+    else{
+        gtk_button_set_label(GTK_BUTTON(matBotones[row][col]), "");
+        gtk_widget_queue_draw(matBotones[row][col]);
+        while (g_main_context_pending(NULL))
+            g_main_context_iteration(NULL, FALSE);
+    } 
 }
+
 
 void cambiarNumero (GtkWidget *widget, gpointer data)
 {
@@ -282,16 +294,78 @@ void on_btnGrabar_clicked()
 	gtk_widget_destroy (dialog);
 }
 
+
+int verificar_fila(int mat[9][9], int row, int num){
+	for (int col = 0; col < 9; col++) {
+		if (mat[row][col] == num) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int verificar_columna(int mat[9][9], int col, int num) {
+	for (int row = 0; row < 9; row++) {
+		if (mat[row][col] == num) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int verificar_sector(int mat[9][9], int startRow, int startCol, int num) {
+	for (int row = 0; row < 3; row++) {
+		for (int col = 0; col < 3; col++) {
+			if (mat[row + startRow][col + startCol] == num) {
+				return 1;
+			} 
+		}
+	}
+	return 0;
+}
+
+int numero_valido(int mat[9][9], int row, int col, int num) {
+	return !verificar_fila(mat, row, num) 
+			&& !verificar_columna(mat, col, num) 
+			&& !verificar_sector(mat, row - (row % 3), col - (col %3), num);
+}
+
+int es_vacia(int mat[9][9], int *row, int *col) {
+	for (*row = 0; *row < 9; (*row)++) {
+		for (*col = 0; *col < 9; (*col)++) {
+			if (mat[*row][*col] == 0) {
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+
+int resolver(int mat[9][9]) { //FUNCION ACTUAL
+	int row = 0;
+	int col = 0;
+	if (!es_vacia(mat, &row, &col)){
+		return 1;
+	}
+	for (int num = 1; num <= 9; num++ ) {
+		if (numero_valido(mat, row, col, num)) {
+			mat[row][col] = num;
+            actualizar_numero(row,col);
+			if (resolver(mat)) {
+				return 1;
+			}
+			mat[row][col] = 0;
+            actualizar_numero(row,col);
+		}
+	}
+	return 0; // SI LLEGA AQUI NO TIENE SOLUCION
+}
+
+
+
 /// BOTÓN RESOLVER
-void resolver(int mat[9][9])
+void resolver2(int mat[9][9]) //FUNCION ALTERNATIVA
 {
-	g_print("1\n");
-    hiloActualizar = g_thread_new("hiloActualizar", &actualizar, NULL);
-	g_print("2\n");
-	g_main_loop_run(gloop);
-	g_print("7\n");
-	exit_thread = FALSE;
-	g_print("8\n");
     //Define cuales celdas estaban definidas desde el principio
     for(i = 0; i < 9; i++){				//Revisa las filas
         for(j = 0; j < 9; j++){			//Revisa las columnas
@@ -314,13 +388,14 @@ void resolver(int mat[9][9])
                     while((revisar_fila == 1 || revisar_columna == 1 || revisar_seccion == 1) && mat[i][j] <= 9){
                         revisar_fila = 0; revisar_columna = 0; revisar_seccion = 0;		//Temporalmente los pone en completados, mientras revisa.
                         mat[i][j]++;		//Le incrementa en un valor al espacio i,j de la matriz y revisa con dicho espacio. Si empieza en cero queda en uno
-						//actualizar_matriz();
+                        
+						actualizar_numero(i,j);
 						
 						//Revisa todos los j de la fila, para ver si cumple los requisitos
                         for(k = 0; k < 9; k++){
                             if(k != j && mat[i][j] == mat[i][k]){	//Si uno no es igual no cumple los requisitos
                                 revisar_fila = 1;					//Pone el revisar_fila en incompleto
-                                //printf("Error en la fila  \t%d%d%d\t%d%d%d\n", i, j, mat[i][j], i, k, mat[i][k]);	//Marca el error en la fila
+                                printf("Error en la fila  \t%d%d%d\t%d%d%d\n", i, j, mat[i][j], i, k, mat[i][k]);	//Marca el error en la fila
                                 break;
                             }
                         }
@@ -330,7 +405,7 @@ void resolver(int mat[9][9])
                             for(l = 0; l < 9; l++){
                                 if(l != i && mat[i][j] == mat[l][j]){	//Si uno no es igual no cumple los requisitos
                                     revisar_columna = 1;				//Pone el revisar_columna en incompleto
-                                    //printf("Error en la columna\t%d%d%d\t%d%d%d\n", i, j, mat[i][j], l, j, mat[l][j]);	//Marca el error en la columna
+                                    printf("Error en la columna\t%d%d%d\t%d%d%d\n", i, j, mat[i][j], l, j, mat[l][j]);	//Marca el error en la columna
                                     break;
                                 }
                             }
@@ -342,7 +417,7 @@ void resolver(int mat[9][9])
 								for(l = 0; l < 9; l++){
                                     if(k != j && l != i && (10*(i/3)+j/3 == 10*(l/3)+k/3) && mat[i][j] == mat[l][k]){	//Si un número de la seccion es igual no cumple los requisitos
                                         revisar_seccion = 1;																//Pone el revisar seccion como incompleto
-                                        //printf("Error en la seccion  \t%d%d%d\t%d%d%d\n", i, j, mat[i][j], l, k, mat[l][k]);	//Marca el error en la seccion
+                                        printf("Error en la seccion  \t%d%d%d\t%d%d%d\n", i, j, mat[i][j], l, k, mat[l][k]);	//Marca el error en la seccion
                                         break;
                                     }
                                 }
@@ -355,7 +430,10 @@ void resolver(int mat[9][9])
 					//Si la matriz tiene un elemento mayor a 9 lo resetea a 0
                     if(mat[i][j] > 9){
                         mat[i][j] = 0;
-                        //actualizar_matriz();
+                        actualizar_numero(i,j);
+                       
+                          printf("i = %d j=%d \n",j,i);
+                            
                         //Busca la siguiente celda vacía
                         do{
                             j--;
@@ -363,10 +441,10 @@ void resolver(int mat[9][9])
                                 j = 8;
                                 i--;
 							}
-                            if (j & 1 || i & 1){
+                            if (j < 0 || i < 0){
                                 terminar = 1; // NO TIENE SOLUCION
-                            } 
-                            
+                            }
+                          
                         } while(celdas_base[i][j] == 1);
                         //Marca como incompleto el terminar
                         terminar = 1;
@@ -377,29 +455,47 @@ void resolver(int mat[9][9])
         }
     }
     
-    g_print("9\n");
-    exit_thread = TRUE;
-    g_print("10\n");
-    g_thread_join (hiloActualizar);
-    g_print("11\n");
-    g_main_loop_unref(gloop);
-    g_print("12\n");
+    
+    
+    
+    
 }
+
+
+void print_mat(int mat[9][9]) {
+	for (int row = 0; row < 9; row++) {
+		for (int col = 0; col < 9; col++) {
+			printf("%2d", mat[row][col]);
+		}
+		printf("\n");
+	}
+}
+
+
 
 void on_btnResolver_clicked()
 {
-    tInicio = clock();
-    resolver(mat);
+    tInicio = clock();    
+    bool i = resolver(mat);
     tFin = clock();
-    actualizar_matriz();
-    
     tDecorrido = (((int)tFin - (int)tInicio) / (CLOCKS_PER_SEC / 1000));     
     
-    int length = snprintf( NULL, 0, "Tiempo: %dms", tDecorrido);
-    char* str = malloc(length++);
-    snprintf(str, length + 1, "Tiempo: %dms", tDecorrido);
-    gtk_label_set_text (GTK_LABEL(labelTiempo), str);
-    free(str);
+    
+    
+    if (i) {
+        int length = snprintf( NULL, 0, "Tiempo: %dms", tDecorrido);
+        char* str = malloc(length++);
+        snprintf(str, length + 1, "Tiempo: %dms", tDecorrido);
+        gtk_label_set_text (GTK_LABEL(labelTiempo), str);
+        free(str);
+	} else {
+        gtk_label_set_text (GTK_LABEL(labelTiempo), "SIN SOLUCION");
+       
+	}	
+
+
+    
+    
 }
 
 /// MAIN
