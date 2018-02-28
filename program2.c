@@ -60,16 +60,6 @@ int file_checker(int *sudoku, int file)
 	return 0; // If we are here, there is no error
 }
 
-/*
- *  Function: column checker                                      
- *  Checks the given column of the sudoku looking for repetitions
- *  Imput arguments: 
- *   int *sudoku : pointer where the sudoku is stored
- *   int column : column that we want to check
- *  Return:
- *   1 if there is an error
- *   0 otherwise
- */
 int column_checker(int *sudoku, int column)
 {
 	int number;
@@ -85,18 +75,6 @@ int column_checker(int *sudoku, int column)
 	return 0; // If we are here, there is no error
 }
 
-/*
- *  Function: box checker                                      
- *  Checks the given box of the sudoku looking for repetitions
- *  The first box has the number '1' and the last, '9'. From left to right
- *  and top to down
- *  Imput arguments: 
- *   int *sudoku : pointer where the sudoku is stored
- *   int box : box that we want to check
- *  Return:
- *   1 if there is an error
- *   0 otherwise
- */
 int box_checker(int *sudoku, int box)
 {
 	int filemult, columnmult, number, i, j, cont = 0, buffer[9];
@@ -181,16 +159,7 @@ int check_all(int *sudoku)
 	return 0;
 }
 
-/*
- *  Function: solve sudoku
- *  This is the 'heart'  of the program. solve_sudoku is a recursive function
- *  which solves the given sudoku.
- *  Imput arguments: 
- *   int *problem : pointer where the sudoku is stored
- *  Return:
- *   1 if there is an error
- *   0 otherwise
- */
+
 int solve_sudoku(int *problem)
 {
 	int *ptr = problem, solve = 1, i = 0;

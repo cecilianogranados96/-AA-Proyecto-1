@@ -363,6 +363,10 @@ void resolver(int mat[9][9])
                                 j = 8;
                                 i--;
 							}
+                            if (x & 1 || i & 1){
+                                terminar = 1; // NO TIENE SOLUCION
+                            } 
+                            
                         } while(celdas_base[i][j] == 1);
                         //Marca como incompleto el terminar
                         terminar = 1;
@@ -397,7 +401,6 @@ void on_btnResolver_clicked()
     gtk_label_set_text (GTK_LABEL(labelTiempo), str);
     free(str);
 }
-
 
 /// MAIN
 int main(int argc, char **argv)
