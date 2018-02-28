@@ -5,17 +5,15 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <gtk/gtk.h>
+#include <pthread.h>
 
 GtkBuilder  *builder; 
 GtkWidget   *winPrincipal;
 GtkWidget	*labelTiempo;
 GtkWidget	*matBotones[9][9];
 
-GThread		*hiloTiempo;
-GThread		*hiloActualizar;
-
-static GMainLoop *gloop;
-static gboolean exit_thread;
+pthread_t hiloTiempo;
+pthread_t hiloActualizar;
 
 clock_t tInicio, tFin;
 int tDecorrido;
@@ -40,11 +38,10 @@ void on_winPrincipal_destroy()
 
 void actualizar_matriz()
 {
-	g_print("Llamo usted?");
 	for (int row = 0; row < 9; row++) {
         for (int col = 0; col < 9; col++) {
 			if(mat[row][col] != 0){
-				//g_print("R:%d C:%d matriz:%d\t", row, col, mat[row][col]);
+				//g_print("R:%d C:%d matriz:%d\n", row, col, mat[row][col]);
 				int length = snprintf( NULL, 0, "%d", mat[row][col]);
 				char* str = malloc(length++);
 				snprintf(str, length + 1, "%d", mat[row][col]);
@@ -62,20 +59,6 @@ void actualizar_matriz()
 				}
         }
     }
-}
-
-void* actualizar(void *data)
-{
-	g_print("3\n");
-	while(!exit_thread){
-		g_print("4\n");
-		g_usleep(1);
-		g_print("5\n");
-		actualizar_matriz();
-		g_print("6\n");
-	}
-	
-	return NULL;
 }
 
 void cambiarNumero (GtkWidget *widget, gpointer data)
@@ -285,13 +268,7 @@ void on_btnGrabar_clicked()
 /// BOTÓN RESOLVER
 void resolver(int mat[9][9])
 {
-	g_print("1\n");
-    hiloActualizar = g_thread_new("hiloActualizar", &actualizar, NULL);
-	g_print("2\n");
-	g_main_loop_run(gloop);
-	g_print("7\n");
-	exit_thread = FALSE;
-	g_print("8\n");
+    
     //Define cuales celdas estaban definidas desde el principio
     for(i = 0; i < 9; i++){				//Revisa las filas
         for(j = 0; j < 9; j++){			//Revisa las columnas
@@ -309,12 +286,12 @@ void resolver(int mat[9][9])
                 do{			
                         
                     terminar = 0;			//Cambia momentaneamente la variable de terminado como completada
-					//printf("\n");
+                     printf("\n");
                     //Mientras no haya terminado de cumplir todos los requisitos
                     while((revisar_fila == 1 || revisar_columna == 1 || revisar_seccion == 1) && mat[i][j] <= 9){
                         revisar_fila = 0; revisar_columna = 0; revisar_seccion = 0;		//Temporalmente los pone en completados, mientras revisa.
                         mat[i][j]++;		//Le incrementa en un valor al espacio i,j de la matriz y revisa con dicho espacio. Si empieza en cero queda en uno
-						//actualizar_matriz();
+						actualizar_matriz();
 						
 						//Revisa todos los j de la fila, para ver si cumple los requisitos
                         for(k = 0; k < 9; k++){
@@ -355,7 +332,7 @@ void resolver(int mat[9][9])
 					//Si la matriz tiene un elemento mayor a 9 lo resetea a 0
                     if(mat[i][j] > 9){
                         mat[i][j] = 0;
-                        //actualizar_matriz();
+                        actualizar_matriz();
                         //Busca la siguiente celda vacía
                         do{
                             j--;
@@ -372,29 +349,20 @@ void resolver(int mat[9][9])
             }
         }
     }
-    
-    g_print("9\n");
-    exit_thread = TRUE;
-    g_print("10\n");
-    g_thread_join (hiloActualizar);
-    g_print("11\n");
-    g_main_loop_unref(gloop);
-    g_print("12\n");
 }
 
 void on_btnResolver_clicked()
 {
+
     tInicio = clock();
     resolver(mat);
     tFin = clock();
     actualizar_matriz();
-    
     tDecorrido = (((int)tFin - (int)tInicio) / (CLOCKS_PER_SEC / 1000));     
-    
     int length = snprintf( NULL, 0, "Tiempo: %dms", tDecorrido);
     char* str = malloc(length++);
     snprintf(str, length + 1, "Tiempo: %dms", tDecorrido);
-    gtk_label_set_text (GTK_LABEL(labelTiempo), str);
+    gtk_label_set_text (labelTiempo,str);
     free(str);
 }
 
@@ -402,8 +370,7 @@ void on_btnResolver_clicked()
 /// MAIN
 int main(int argc, char **argv)
 {
-	//gloop = g_main_loop_new(NULL, FALSE);
-	gtk_init(&argc, &argv);
+    gtk_init(&argc, &argv);
 	crearInterfaz();
 
 	return 0;
