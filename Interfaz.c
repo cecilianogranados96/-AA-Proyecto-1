@@ -7,18 +7,13 @@
 #include <gtk/gtk.h>
 #include <pthread.h>
 
-typedef struct {
-    GtkWidget *w_lbl_time;
-} app_widgets;
-gboolean timer_handler(app_widgets *widgets);
-
 GtkBuilder  *builder; 
 GtkWidget   *winPrincipal;
 GtkWidget	*labelTiempo;
 GtkWidget	*matBotones[9][9];
 
 pthread_t hiloTiempo;
-pthread_t hiloactualizar;
+pthread_t hiloActualizar;
 
 clock_t tInicio, tFin;
 int tDecorrido;
@@ -54,9 +49,16 @@ void actualizar_matriz()
 				snprintf(str, length + 1, "%d", mat[row][col]);
 				gtk_button_set_label(GTK_BUTTON(matBotones[row][col]), str);
 				free(str);
+				gtk_widget_queue_draw(matBotones[row][col]);
+				while (g_main_context_pending(NULL))
+					g_main_context_iteration(NULL, FALSE);
 			}
-			else
+			else{
 				gtk_button_set_label(GTK_BUTTON(matBotones[row][col]), "");
+				gtk_widget_queue_draw(matBotones[row][col]);
+				while (g_main_context_pending(NULL))
+					g_main_context_iteration(NULL, FALSE);
+				}
         }
     }
 }
@@ -269,23 +271,6 @@ void on_btnGrabar_clicked()
 
 
 /// BOTÓN RESOLVER
-void* tiempo(void *vargp)
-{
-	int termina = 1;
-	while(termina == 1){
-		for(int i = 0; i < 1100;i++){
-			int length = snprintf(NULL, 0, "%d", i);
-			char* str = malloc(length++);
-			snprintf(str, length + 1, "%d", i);
-			gtk_label_set_text(GTK_LABEL(labelTiempo), str);
-			usleep(1000);
-			gtk_widget_queue_draw (winPrincipal);
-		}
-		termina = 0;
-	}
-	return NULL;
-}
-
 void resolver(int mat[9][9])
 {
     
@@ -312,6 +297,7 @@ void resolver(int mat[9][9])
                     while((revisar_fila == 1 || revisar_columna == 1 || revisar_seccion == 1) && mat[i][j] <= 9){
                         revisar_fila = 0; revisar_columna = 0; revisar_seccion = 0;		//Temporalmente los pone en completados, mientras revisa.
                         mat[i][j]++;		//Le incrementa en un valor al espacio i,j de la matriz y revisa con dicho espacio. Si empieza en cero queda en uno
+						actualizar_matriz();
 						
 						//Revisa todos los j de la fila, para ver si cumple los requisitos
                         for(k = 0; k < 9; k++){
@@ -352,6 +338,7 @@ void resolver(int mat[9][9])
 					//Si la matriz tiene un elemento mayor a 9 lo resetea a 0
                     if(mat[i][j] > 9){
                         mat[i][j] = 0;
+                        actualizar_matriz();
                         //Busca la siguiente celda vacía
                         do{
                             j--;
@@ -372,9 +359,7 @@ void resolver(int mat[9][9])
 
 void on_btnResolver_clicked()
 {
-	//pthread_create(&hiloTiempo, NULL, tiempo, NULL);
-    //pthread_join(hiloTiempo, NULL);
-    
+
     tInicio = clock();
     resolver(mat);
     tFin = clock();
