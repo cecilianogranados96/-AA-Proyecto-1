@@ -30,8 +30,6 @@ int mat[9][9] = {{0,0,0,0,0,0,0,0},
 int celdas_base[9][9];
 int terminar = 1, revisar_fila = 1, revisar_columna = 1, revisar_seccion = 1;
 
-
-
 /// RELACIONADO CON INTERFAZ
 void on_winPrincipal_destroy()
 {
@@ -129,14 +127,17 @@ void crearInterfaz()
 	GtkWidget 	*marco;
     GtkWidget 	*matriz;
     GtkWidget 	*marcoTiempo;
-	
+    
+    
 	builder = gtk_builder_new();
     gtk_builder_add_from_file (builder, "Interfaz.glade", NULL);
     winPrincipal = GTK_WIDGET(gtk_builder_get_object(builder, "winPrincipal"));
-	
+    
 	marcoTiempo = GTK_WIDGET(gtk_builder_get_object(builder, "marcoTiempo"));
-	labelTiempo = GTK_WIDGET(gtk_label_new("0"));
+	labelTiempo = GTK_WIDGET(gtk_label_new("Tiempo: 0"));
 	gtk_container_add(GTK_CONTAINER(marcoTiempo), labelTiempo);
+
+
 	
 	marco = GTK_WIDGET(gtk_builder_get_object(builder, "marco"));
 	matriz = gtk_grid_new();
@@ -175,8 +176,6 @@ void crearInterfaz()
     gtk_widget_show_all(winPrincipal);                
     gtk_main();
 }
-
-
 
 /// BOTÓN LEER
 void leer(char archivo[1024])
@@ -222,8 +221,6 @@ void on_btnLeer_clicked()
 	gtk_widget_destroy (dialog);
 }
 
-
-
 /// BOTÓN GUARDAR
 void guardar(char archivo[1024],int mat[9][9])
 {
@@ -268,8 +265,6 @@ void on_btnGrabar_clicked()
 	gtk_widget_destroy (dialog);
 }
 
-
-
 /// BOTÓN RESOLVER
 void resolver(int mat[9][9])
 {
@@ -284,15 +279,14 @@ void resolver(int mat[9][9])
 			}
         }
     }
-    
-    
     //Soluciona el sudoku
     for(i = 0; i < 9; i++){					//Revisa las columnas
         for(j = 0; j < 9; j++){				//Revisa las filas
             if(celdas_base[i][j] == 0){ 	//Si la celda base sea 0, osea, que no tuviera un dato de inicio
-                do{							
+                do{			
+                        
                     terminar = 0;			//Cambia momentaneamente la variable de terminado como completada
-                    
+                     printf("\n");
                     //Mientras no haya terminado de cumplir todos los requisitos
                     while((revisar_fila == 1 || revisar_columna == 1 || revisar_seccion == 1) && mat[i][j] <= 9){
                         revisar_fila = 0; revisar_columna = 0; revisar_seccion = 0;		//Temporalmente los pone en completados, mientras revisa.
@@ -303,7 +297,7 @@ void resolver(int mat[9][9])
                         for(k = 0; k < 9; k++){
                             if(k != j && mat[i][j] == mat[i][k]){	//Si uno no es igual no cumple los requisitos
                                 revisar_fila = 1;					//Pone el revisar_fila en incompleto
-                                printf("Error en la fila  \t%d%d%d\t%d%d%d\n", i, j, mat[i][j], i, k, mat[i][k]);	//Marca el error en la fila
+                                //printf("Error en la fila  \t%d%d%d\t%d%d%d\n", i, j, mat[i][j], i, k, mat[i][k]);	//Marca el error en la fila
                                 break;
                             }
                         }
@@ -313,7 +307,7 @@ void resolver(int mat[9][9])
                             for(l = 0; l < 9; l++){
                                 if(l != i && mat[i][j] == mat[l][j]){	//Si uno no es igual no cumple los requisitos
                                     revisar_columna = 1;				//Pone el revisar_columna en incompleto
-                                    printf("Error en la columna\t%d%d%d\t%d%d%d\n", i, j, mat[i][j], l, j, mat[l][j]);	//Marca el error en la columna
+                                    //printf("Error en la columna\t%d%d%d\t%d%d%d\n", i, j, mat[i][j], l, j, mat[l][j]);	//Marca el error en la columna
                                     break;
                                 }
                             }
@@ -325,7 +319,7 @@ void resolver(int mat[9][9])
 								for(l = 0; l < 9; l++){
                                     if(k != j && l != i && (10*(i/3)+j/3 == 10*(l/3)+k/3) && mat[i][j] == mat[l][k]){	//Si un número de la seccion es igual no cumple los requisitos
                                         revisar_seccion = 1;																//Pone el revisar seccion como incompleto
-                                        printf("Error en la seccion  \t%d%d%d\t%d%d%d\n", i, j, mat[i][j], l, k, mat[l][k]);	//Marca el error en la seccion
+                                        //printf("Error en la seccion  \t%d%d%d\t%d%d%d\n", i, j, mat[i][j], l, k, mat[l][k]);	//Marca el error en la seccion
                                         break;
                                     }
                                 }
@@ -349,7 +343,7 @@ void resolver(int mat[9][9])
                         } while(celdas_base[i][j] == 1);
                         //Marca como incompleto el terminar
                         terminar = 1;
-                        printf("\n\nRegreso\t\n\n"); //Regresa
+                        //printf("\n\nRegreso\t\n\n"); //Regresa
                     }
                 } while(terminar == 1);		//Mientras no este terminado
             }
@@ -364,11 +358,13 @@ void on_btnResolver_clicked()
     resolver(mat);
     tFin = clock();
     actualizar_matriz();
-    
-    tDecorrido = (((int)tFin - (int)tInicio) / (CLOCKS_PER_SEC / 1000));
-    g_print("\nTIEMPO: %d \n",tDecorrido);
+    tDecorrido = (((int)tFin - (int)tInicio) / (CLOCKS_PER_SEC / 1000));     
+    int length = snprintf( NULL, 0, "Tiempo: %dms", tDecorrido);
+    char* str = malloc(length++);
+    snprintf(str, length + 1, "Tiempo: %dms", tDecorrido);
+    gtk_label_set_text (labelTiempo,str);
+    free(str);
 }
-
 
 
 /// MAIN
