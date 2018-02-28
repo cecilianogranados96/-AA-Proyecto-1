@@ -363,7 +363,7 @@ void resolver(int mat[9][9])
                                 j = 8;
                                 i--;
 							}
-                            if (x & 1 || i & 1){
+                            if (j & 1 || i & 1){
                                 terminar = 1; // NO TIENE SOLUCION
                             } 
                             
