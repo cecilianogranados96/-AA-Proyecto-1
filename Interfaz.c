@@ -29,6 +29,8 @@ FILE *archivo;	//Un archivo de texto
 int largo;		//Variable para obtener el largo de un char*
 char* string;	//Variable para guardar un string
 
+char* error;
+
 int matrizP[9][9];
 int mat[9][9] = {{0,0,0,0,0,0,0,0},	//Variable con las entradas de la matriz
 				 {0,0,0,0,0,0,0,0},
@@ -51,6 +53,12 @@ void on_winPrincipal_destroy()
 }
 
 void ventana_error(){
+	GtkDialogFlags flags = GTK_DIALOG_DESTROY_WITH_PARENT;
+	dialog = gtk_message_dialog_new (GTK_WINDOW(winPrincipal), flags,
+                                 GTK_MESSAGE_INFO, GTK_BUTTONS_OK,
+                                 "La tabla no pudo ser verificada:\n\n%s", error);
+gtk_dialog_run (GTK_DIALOG (dialog));
+gtk_widget_destroy (dialog);
 }
 
 void actualizar(int i, int j)
@@ -297,8 +305,11 @@ bool verificarFilas(int fila, int columna, int num)
 {
 	for(k = 0; k < 9; k++){
 		if(k != columna && mat[fila][k] == num){
-			printf("Fila: %d->%d-%d = %d->%d-%d\n", mat[fila][k], fila, k, num, fila, columna);
+			largo = snprintf( NULL, 0, "Repetido en la fila %d:\n\t Elementos en (%d, %d) y en (%d, %d)\n", fila, fila, columna, fila, k);
+			error = malloc(largo++);
+			snprintf(error, largo + 1, "Repetido en la fila %d:\n\t Elementos en (%d, %d) y en (%d, %d)\n", fila, fila, columna, fila, k);
 			return false;
+			break;
 		}
 	}
 	printf("Fila está bien\n");
@@ -309,8 +320,11 @@ bool verificarColumnas(int fila, int columna, int num)
 {
 	for(k = 0; k < 9; k++){
 		if(k != fila && mat[k][columna] == num){
-			printf("Columna: %d->%d-%d = %d->%d-%d\n", mat[k][columna], k, columna, num, fila, columna);
+			largo = snprintf( NULL, 0, "Repetido en la columna %d:\n\t Elementos en (%d, %d) y en (%d, %d)\n", fila, fila, columna, k, columna);
+			error = malloc(largo++);
+			snprintf(error, largo + 1, "Repetido en la columna %d:\n\t Elementos en (%d, %d) y en (%d, %d)\n", fila, fila, columna, k, columna);
 			return false;
+			break;
 		}
 	}
 	printf("Columna está bien\n");
@@ -321,10 +335,13 @@ bool verificarZona(int fila, int columna, int inicioFila, int inicioColumna, int
 {
 	for (int k = 0; k < 3; k++){
         for (int l = 0; l < 3; l++){
-            if(k != fila && l != columna){
-				if (num == mat[k + inicioFila][l + inicioColumna]){
-					printf("Caja: %d->%d-%d = %d->%d-%d\n", mat[k+ inicioFila][l+ inicioColumna], k, l, num, fila, columna);
+            if(k+ inicioFila != fila && l+ inicioColumna != columna){
+				if (mat[k + inicioFila][l + inicioColumna] == num){
+					largo = snprintf( NULL, 0, "Repetido en la caja:\n\t Elementos en (%d, %d) y en (%d, %d)\n", fila, columna, k+ inicioFila, l+ inicioColumna);
+					error = malloc(largo++);
+					snprintf(error, largo + 1, "Repetido en la caja:\n\t Elementos en (%d, %d) y en (%d, %d)\n", fila, columna, k+ inicioFila, l+ inicioColumna);
 					return false;
+					break;
 				}
 			}
 		}
@@ -346,7 +363,7 @@ bool verificar()
     }
 	
 	for(i = 0; i < 9; i++){
-		for(j = 0; j < 9; i++){
+		for(j = 0; j < 9; j++){
 			if(celdas_base[i][j] == 1){
 				return 	verificarFilas(i, j, mat[i][j]) &&
 						verificarColumnas(i, j, mat[i][j]) && 

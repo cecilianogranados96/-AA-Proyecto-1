@@ -2,14 +2,17 @@
 typedef enum { false, true } bool;
 
 int celdas_base[9][9];
-int mat[9][9] = {{1,0,0, 0,0,3, 2,9,0},
-				 {0,1,6, 5,0,0, 0,0,0},
-				 {0,2,0, 0,0,1, 0,0,0},
-				 {0,0,3, 7,0,5, 1,0,0},
-				 {9,0,0, 0,0,0, 0,0,8},
-				 {0,0,2, 9,0,8, 3,0,0},
-				 {0,0,0, 4,0,0, 0,8,0},
-				 {0,4,7, 1,0,0, 0,0,0}};
+int mat[9][9] = {{0,0,0, 0,0,0, 0,0,0},
+				 {0,0,0, 0,0,0, 0,0,0},
+				 {0,0,0, 0,0,0, 0,0,0},
+				 
+				 {0,0,0, 1,0,0, 0,0,0},
+				 {0,0,0, 0,0,0, 0,0,0},
+				 {0,0,0, 0,0,1, 0,0,0},
+				 
+				 {0,0,0, 0,0,0, 0,0,0},
+				 {0,0,0, 0,0,0, 0,0,0},
+				 {0,0,0, 0,0,0, 0,0,0}};
 
 int i, j, k, l;
 
@@ -40,24 +43,25 @@ bool verificarZona(int fila, int columna, int inicioFila, int inicioColumna, int
 	for (int k = 0; k < 3; k++){
         for (int l = 0; l < 3; l++){
             if(k != fila && l != columna){
-				if (num == mat[k + inicioFila][l + inicioColumna]){
-					printf("Caja: %d->%d-%d = %d->%d-%d\n", mat[k+ inicioFila][l+ inicioColumna], k, l, num, fila, columna);
+				if (mat[k + inicioFila][l + inicioColumna] == num){
+					printf("Caja: %d->%d-%d = %d->%d-%d\n", mat[k+ inicioFila][l+ inicioColumna], k+ inicioFila, l+ inicioColumna, num, fila, columna);
 					return false;
+					break;
 				}
 			}
 		}
 	}
-	printf("Columna está bien\n");
+	printf("Caja está bien\n");
     return true;
 }
 
 bool verificar(){
 	for(i = 0; i < 9; i++){
-		for(j = 0; j < 9; i++){
+		for(j = 0; j < 9; j++){
 			if(celdas_base[i][j] == 1){
 				return 	verificarFilas(i, j, mat[i][j]) &&
 						verificarColumnas(i, j, mat[i][j]) && 
-						verificarZona(i, j, i - i%3 , j - j%3, mat[i][j]);
+						verificarZona(i, j, (i - i%3) , (j - j%3), mat[i][j]);
 			}
 		}
 	}
@@ -73,6 +77,7 @@ int main() {
 			}
         }
     }
+
     if(verificar() == true)
 		printf("ok");
     else
