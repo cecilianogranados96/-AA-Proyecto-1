@@ -1,95 +1,82 @@
 #include <stdio.h>
+typedef enum { false, true } bool;
 
-int verificar_fila(int mat[9][9], int row, int num){
-	for (int col = 0; col < 9; col++) {
-		if (mat[row][col] == num) {
-			return 1;
+int celdas_base[9][9];
+int mat[9][9] = {{1,0,0, 0,0,3, 2,9,0},
+				 {0,1,6, 5,0,0, 0,0,0},
+				 {0,2,0, 0,0,1, 0,0,0},
+				 {0,0,3, 7,0,5, 1,0,0},
+				 {9,0,0, 0,0,0, 0,0,8},
+				 {0,0,2, 9,0,8, 3,0,0},
+				 {0,0,0, 4,0,0, 0,8,0},
+				 {0,4,7, 1,0,0, 0,0,0}};
+
+int i, j, k, l;
+
+
+bool verificarFilas(int fila, int columna, int num){
+	for(k = 0; k < 9; k++){
+		if(k != columna && mat[fila][k] == num){
+			printf("Fila: %d->%d-%d = %d->%d-%d\n", mat[fila][k], fila, k, num, fila, columna);
+			return false;
 		}
 	}
-	return 0;
+	printf("Fila está bien\n");
+	return true;
 }
 
-int verificar_columna(int mat[9][9], int col, int num) {
-	for (int row = 0; row < 9; row++) {
-		if (mat[row][col] == num) {
-			return 1;
+bool verificarColumnas(int fila, int columna, int num){
+	for(k = 0; k < 9; k++){
+		if(k != fila && mat[k][columna] == num){
+			printf("Columna: %d->%d-%d = %d->%d-%d\n", mat[k][columna], k, columna, num, fila, columna);
+			return false;
 		}
 	}
-	return 0;
+	printf("Columna está bien\n");
+	return true;
 }
 
-int verificar_sector(int mat[9][9], int startRow, int startCol, int num) {
-	for (int row = 0; row < 3; row++) {
-		for (int col = 0; col < 3; col++) {
-			if (mat[row + startRow][col + startCol] == num) {
-				return 1;
-			} 
-		}
-	}
-	return 0;
-}
-
-int numero_valido(int mat[9][9], int row, int col, int num) {
-	return !verificar_fila(mat, row, num) 
-			&& !verificar_columna(mat, col, num) 
-			&& !verificar_sector(mat, row - (row % 3), col - (col %3), num);
-}
-
-int es_vacia(int mat[9][9], int *row, int *col) {
-	for (*row = 0; *row < 9; (*row)++) {
-		for (*col = 0; *col < 9; (*col)++) {
-			if (mat[*row][*col] == 0) {
-				return 1;
+bool verificarZona(int fila, int columna, int inicioFila, int inicioColumna, int num){
+	for (int k = 0; k < 3; k++){
+        for (int l = 0; l < 3; l++){
+            if(k != fila && l != columna){
+				if (num == mat[k + inicioFila][l + inicioColumna]){
+					printf("Caja: %d->%d-%d = %d->%d-%d\n", mat[k+ inicioFila][l+ inicioColumna], k, l, num, fila, columna);
+					return false;
+				}
 			}
 		}
 	}
-	return 0;
+	printf("Columna está bien\n");
+    return true;
 }
 
-int resolver(int mat[9][9]) {
-	int row = 0;
-	int col = 0;
-	if (!es_vacia(mat, &row, &col)){
-		return 1;
-	}
-	for (int num = 1; num <= 9; num++ ) {
-		if (numero_valido(mat, row, col, num)) {
-			mat[row][col] = num;
-			if (resolver(mat)) {
-				return 1;
+bool verificar(){
+	for(i = 0; i < 9; i++){
+		for(j = 0; j < 9; i++){
+			if(celdas_base[i][j] == 1){
+				return 	verificarFilas(i, j, mat[i][j]) &&
+						verificarColumnas(i, j, mat[i][j]) && 
+						verificarZona(i, j, i - i%3 , j - j%3, mat[i][j]);
 			}
-			mat[row][col] = 0;
 		}
-	}
-	
-	return 0; // SI LLEGA AQUI NO TIENE SOLUCION
-}
-
-void print_mat(int mat[9][9]) {
-	for (int row = 0; row < 9; row++) {
-		for (int col = 0; col < 9; col++) {
-			printf("%2d", mat[row][col]);
-		}
-		printf("\n");
 	}
 }
 
 int main() {
-	
-	int mat[9][9] = {
-             {0,0,0, 0,0,3, 2,9,0},
-			 {0,8,6, 5,0,0, 0,0,0},
-			 {0,2,0, 0,0,1, 0,0,0},
-			 {0,0,3, 7,0,5, 1,0,0},
-			 {9,0,0, 0,0,0, 0,0,8},
-			 {0,0,2, 9,0,8, 3,0,0},
-			 {0,0,0, 4,0,0, 0,8,0},
-			 {0,4,7, 1,0,0, 0,0,0}};
-	
-	if (resolver(mat)) {
-		print_mat(mat);
-	} else {
-		printf("SIN SOLUCION");
-	}	
+	for(i = 0; i < 9; i++){				//Revisa las filas
+        for(j = 0; j < 9; j++){			//Revisa las columnas
+            if(mat[i][j] == 0)			//Si es cero escribe que no había celdas base
+                celdas_base[i][j] = 0;	
+            else{						//Si tiene cualquier otra cosa escribe un uno si había algo
+				celdas_base[i][j] = 1;
+			}
+        }
+    }
+    if(verificar() == true)
+		printf("ok");
+    else
+		printf("No solution exists");
+    
 	return 0;
 }
