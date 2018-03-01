@@ -64,12 +64,31 @@ void actualizar(int i, int j)
     gtk_label_set_text (GTK_LABEL(labelTiempo), string);
     free(string);
     
-    gtk_widget_queue_draw(labelTiempo);
-	gtk_widget_queue_draw(matBotones[i][j]);
+
 	
 	while (g_main_context_pending(NULL))
 		g_main_context_iteration(NULL, FALSE);
 }
+
+void actualizar_num(int i, int j)
+{
+    if(mat[i][j] != 0){	
+        largo = snprintf( NULL, 0, "%d", mat[i][j]);
+        string = malloc(largo++);
+        snprintf(string, largo + 1, "%d", mat[i][j]);
+        gtk_button_set_label(GTK_BUTTON(matBotones[i][j]), string);
+        free(string);
+    }
+    //Si el elemento es cero
+    else{
+        gtk_button_set_label(GTK_BUTTON(matBotones[i][j]), "");
+    }
+    actualizar(row, col);
+    while (g_main_context_pending(NULL))
+		g_main_context_iteration(NULL, FALSE);
+    
+}
+
 
 void actualizar_matriz()
 {
@@ -77,20 +96,18 @@ void actualizar_matriz()
         for (col = 0; col < 9; col++) {
 			//Si el elemento es distinto de cero
 			if(mat[row][col] != 0){
-				//g_print("R:%d C:%d matriz:%d\t", row, col, mat[row][col]);
-				
+				//g_print("R:%d C:%d matriz:%d\t", row, col, mat[row][col]);		
 				largo = snprintf( NULL, 0, "%d", mat[row][col]);
 				string = malloc(largo++);
 				snprintf(string, largo + 1, "%d", mat[row][col]);
 				gtk_button_set_label(GTK_BUTTON(matBotones[row][col]), string);
 				free(string);
-				actualizar(row, col);
+				//actualizar(row, col);
 			}
-			
 			//Si el elemento es cero
 			else{
 				gtk_button_set_label(GTK_BUTTON(matBotones[row][col]), "");
-				actualizar(row, col);
+				//actualizar(row, col);
 			}
         }
     }
@@ -200,7 +217,6 @@ void crearInterfaz()
 }
 
 
-
 /// BOTÓN LEER
 void leer(char nombre[1024])
 {
@@ -239,7 +255,6 @@ void on_btnLeer_clicked()
 }
 
 
-
 /// BOTÓN GUARDAR
 void guardar(char nombre[1024],int mat[9][9])
 {
@@ -275,7 +290,6 @@ void on_btnGrabar_clicked()
 	}
 	gtk_widget_destroy (dialog);
 }
-
 
 
 /// BOTÓN RESOLVER
@@ -358,7 +372,7 @@ void resolver() //FUNCION ALTERNATIVA
                         revisar_fila = 0; revisar_columna = 0; revisar_seccion = 0;		//Temporalmente los pone en completados, mientras revisa.
                         mat[i][j]++;		//Le incrementa en un valor al espacio i,j de la matriz y revisa con dicho espacio. Si empieza en cero queda en uno
                         
-						actualizar_matriz();
+						actualizar_num(i,j);
 						
 						//Revisa todos los j de la fila, para ver si cumple los requisitos
                         for(k = 0; k < 9; k++){
@@ -399,7 +413,7 @@ void resolver() //FUNCION ALTERNATIVA
 					//Si la matriz tiene un elemento mayor a 9 lo resetea a 0
                     if(mat[i][j] > 9){
                         mat[i][j] = 0;
-                        actualizar_matriz();
+                        actualizar_num(i,j);
                        
                           //printf("i = %d j=%d \n",j,i);
                             
@@ -433,14 +447,19 @@ void on_btnResolver_clicked()
 	}
 	
 	if(verificar()){
-		g_print("Entro\n");
+		g_print("ENTRO\n");
 		tInicio = clock();    
 		resolver();
 	}
-    else
-		ventana_error();
+    else{
+		//ventana_error();
+        g_print("ERROR\n");
+    
+        gtk_label_set_text (GTK_LABEL(labelTiempo), "ERROR NO TIENE SOLUCIÓN");
+        
+        
+    }
 }
-
 
 
 /// MAIN
